@@ -1,28 +1,29 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+using namespace std;
 
 // Constants
 const double g = 9.81; // Acceleration due to gravity (m/s^2)
 
-// Function to calculate the net force acting on the sphere
-double calculateNetForce(double mass, double volume, double velocity, double dragCoefficient,
-                         double fluidDensity, double airDensity, double crossSectionalArea) {
+// Function to calculate the forces acting on the sphere and net force
+void calculateForces(double mass, double volume, double velocity, double dragCoefficient,
+                     double fluidDensity, double airDensity, double crossSectionalArea,
+                     double& airDragForce, double& viscousDragForce, double& buoyantForce, double& netForce) {
     // Gravitational force
     double gravitationalForce = mass * g;
 
     // Buoyant force
-    double buoyantForce = fluidDensity * volume * g;
+    buoyantForce = fluidDensity * volume * g;
 
     // Viscous drag force (proportional to velocity)
-    double viscousDragForce = dragCoefficient * velocity;
+    viscousDragForce = dragCoefficient * velocity;
 
     // Air drag force (proportional to velocity squared)
-    double airDragForce = 0.5 * airDensity * crossSectionalArea * dragCoefficient * velocity * velocity;
+    airDragForce = 0.5 * airDensity * crossSectionalArea * dragCoefficient * velocity * velocity;
 
     // Net force acting on the sphere
-    double netForce = gravitationalForce - buoyantForce - viscousDragForce - airDragForce;
-    return netForce;
+    netForce = gravitationalForce - buoyantForce - viscousDragForce - airDragForce;
 }
 
 // Function to simulate the motion of a falling spherical body using Euler's method
@@ -31,32 +32,47 @@ void simulateFallingSphere(double mass, double volume, double dragCoefficient, d
     // Initial conditions
     double y = 0.0; // Initial position (m)
     double v = 0.0; // Initial velocity (m/s)
+    double a = 0.0; // Initial acceleration (m/s^2)
 
-    // Open a file to save the data (space-separated)
-    std::ofstream dataFile("motion_data.txt");
-    dataFile << "Time Position Velocity\n"; // Write headers for better readability
+    // Open files to save the data for each type of force
+    ofstream airDragFile("air_drag_data.txt");
+    ofstream viscousDragFile("viscous_drag_data.txt");
+    ofstream buoyantForceFile("buoyant_force_data.txt");
+
+    // Write headers for each file
+    airDragFile << "Time Position Velocity Acceleration\n";
+    viscousDragFile << "Time Position Velocity Acceleration\n";
+    buoyantForceFile << "Time Position Velocity Acceleration\n";
 
     // Simulate the motion over the specified duration
     for (double t = 0.0; t <= duration; t += timeStep) {
-        // Calculate net force acting on the sphere
-        double netForce = calculateNetForce(mass, volume, v, dragCoefficient, fluidDensity, airDensity, crossSectionalArea);
+        // Variables to hold the forces
+        double airDragForce, viscousDragForce, buoyantForce, netForce;
+
+        // Calculate the forces and net force acting on the sphere
+        calculateForces(mass, volume, v, dragCoefficient, fluidDensity, airDensity, crossSectionalArea,
+                        airDragForce, viscousDragForce, buoyantForce, netForce);
 
         // Calculate acceleration using Newton's second law
-        double acceleration = netForce / mass;
+        a = netForce / mass;
 
         // Update position and velocity using Euler's method
         y += v * timeStep;
-        v += acceleration * timeStep;
+        v += a * timeStep;
 
-        // Save the current time, position, and velocity to the file (space-separated)
-        dataFile << t << " " << y << " " << v << "\n";
+        // Save the current time, position, velocity, and acceleration to each file
+        airDragFile << t << " " << y << " " << v << " " << a << "\n";
+        viscousDragFile << t << " " << y << " " << v << " " << a << "\n";
+        buoyantForceFile << t << " " << y << " " << v << " " << a << "\n";
 
-        // Output the current time, position, and velocity
-        std::cout << "Time: " << t << " s, Position: " << y << " m, Velocity: " << v << " m/s" << std::endl;
+        // Optional: Output the current time, position, velocity, and acceleration
+        cout << "Time: " << t << " s, Position: " << y << " m, Velocity: " << v << " m/s, Acceleration: " << a << " m/s^2" << endl;
     }
 
-    // Close the file
-    dataFile.close();
+    // Close the files
+    airDragFile.close();
+    viscousDragFile.close();
+    buoyantForceFile.close();
 }
 
 // Main function
@@ -66,32 +82,33 @@ int main() {
     double timeStep, duration;
 
     // Prompt user for various parameters
-    std::cout << "Enter mass of the sphere (kg): ";
-    std::cin >> mass;
+  cout << "Enter mass of the sphere (kg): ";
+  cin >> mass;
 
-    std::cout << "Enter volume of the sphere (m^3): ";
-    std::cin >> volume;
+    cout << "Enter volume of the sphere (m^3): ";
+    cin >> volume;
 
-    std::cout << "Enter drag coefficient of the sphere: ";
-    std::cin >> dragCoefficient;
+   cout << "Enter drag coefficient of the sphere: ";
+   cin >> dragCoefficient;
 
-    std::cout << "Enter fluid density (kg/m^3): ";
-    std::cin >> fluidDensity;
+    cout << "Enter fluid density (kg/m^3): ";
+    cin >> fluidDensity;
 
-    std::cout << "Enter air density (kg/m^3): ";
-    std::cin >> airDensity;
+    cout << "Enter air density (kg/m^3): ";
+    cin >> airDensity;
 
-    std::cout << "Enter cross-sectional area of the sphere (m^2): ";
-    std::cin >> crossSectionalArea;
+    cout << "Enter cross-sectional area of the sphere (m^2): ";
+    cin >> crossSectionalArea;
 
-    std::cout << "Enter time step for the simulation (s): ";
-    std::cin >> timeStep;
+    cout << "Enter time step for the simulation (s): ";
+    cin >> timeStep;
 
-    std::cout << "Enter duration of the simulation (s): ";
-    std::cin >> duration;
+    cout << "Enter duration of the simulation (s): ";
+    cin >> duration;
 
     // Run the simulation
     simulateFallingSphere(mass, volume, dragCoefficient, fluidDensity, airDensity, crossSectionalArea, timeStep, duration);
 
     return 0;
 }
+
